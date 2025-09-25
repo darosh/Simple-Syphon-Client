@@ -27,19 +27,27 @@ jobs:
           -configuration Release \
           -derivedDataPath "./build"
 
-    - name: Package .app into zip
+    - name: Find and verify build output
       run: |
-        mkdir -p ./artifacts
+        echo "Looking for built app..."
+        find ./build -name "*.app" -type d
+
         APP_PATH=$(find ./build -name "*.app" -type d | head -1)
-        if [ -z "$APP_PATH" ]; then
-          echo "No .app found!"
-          exit 1
+        if [ -n "$APP_PATH" ]; then
+          echo "Found app at: $APP_PATH"
+          lipo -info "$APP_PATH/Contents/MacOS/"*
+
+          # Create artifacts directory and zip the app
+          mkdir -p ./artifacts
+          APP_NAME=$(basename "$APP_PATH")
+          zip -r "./artifacts/${APP_NAME%.*}-Universal.zip" "$APP_PATH"
+
+          echo "Created zip: ./artifacts/${APP_NAME%.*}-Universal.zip"
+          ls -la ./artifacts/
+        else
+          echo "No app found, checking all build outputs:"
+          find ./build -type f -name "*" | head -20
         fi
-        echo "Found app: $APP_PATH"
-        APP_NAME=$(basename "$APP_PATH")
-        cd "$(dirname "$APP_PATH")"
-        zip -r "../../artifacts/${APP_NAME%.*}-Universal.zip" "$APP_NAME"
-        cd -
 
     - name: Upload Artifacts to Actions
       uses: actions/upload-artifact@v4

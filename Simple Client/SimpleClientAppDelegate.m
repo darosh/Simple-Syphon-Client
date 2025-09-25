@@ -1,7 +1,7 @@
 /*
     SimpleClientAppDelegate.m
 	Syphon (SDK)
-	
+
     Copyright 2010-2011 bangnoise (Tom Butterworth) & vade (Anton Marini).
     All rights reserved.
 
@@ -74,11 +74,18 @@
     // We use an NSArrayController to populate the menu of available servers
     // Here we bind its content to SyphonServerDirectory's servers array
     [availableServersController bind:@"contentArray" toObject:[SyphonServerDirectory sharedDirectory] withKeyPath:@"servers" options:nil];
-    
+
     // Slightly weird binding here, if anyone can neatly and non-weirdly improve on this then feel free...
     [self bind:@"selectedServerDescriptions" toObject:availableServersController withKeyPath:@"selectedObjects" options:nil];
-    
-    [[self.view window] setContentMinSize:(NSSize){400.0,300.0}];
+
+    NSWindow *window = [self.view window];
+    [window setTitlebarAppearsTransparent:YES];
+    [window setTitleVisibility:NSWindowTitleHidden];
+    [window setStyleMask:[window styleMask] | NSWindowStyleMaskFullSizeContentView];
+    [window setMovableByWindowBackground:YES];
+    [window setLevel:NSFloatingWindowLevel];
+
+    [[self.view window] setContentMinSize:(NSSize){128.0,128.0}];
 	[[self.view window] setDelegate:self];
 }
 
@@ -108,10 +115,10 @@
                                                                context:[[self.view openGLContext] CGLContextObj]
                                                                options:nil newFrameHandler:^(SyphonOpenGLClient *client) {
                 // This gets called whenever the client receives a new frame.
-                
+
                 // The new-frame handler could be called from any thread, but because we update our UI we have
                 // to do this on the main thread.
-                
+
                 [[NSOperationQueue mainQueue] addOperationWithBlock:^{
                     // First we track our framerate...
                     self->fpsCount++;
@@ -126,7 +133,7 @@
                     SyphonOpenGLImage *frame = [client newFrameImage];
 
                     NSSize imageSize = frame.textureSize;
-                    
+
                     BOOL changed = NO;
                     if (self.frameWidth != imageSize.width)
                     {
@@ -149,9 +156,9 @@
                     [self.view setNeedsDisplay:YES];
                 }];
             }];
-            
+
             // If we have a client we do nothing - wait until it outputs a frame
-            
+
             // Otherwise clear the view
             if (syClient == nil)
             {
@@ -167,7 +174,7 @@
 }
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification
-{		
+{
 	[syClient stop];
 	syClient = nil;
 }
@@ -177,7 +184,7 @@
 - (NSSize)windowContentSizeForCurrentVideo
 {
 	NSSize imageSize = NSMakeSize(self.frameWidth, self.frameHeight);
-	
+
 	if (imageSize.width == 0 || imageSize.height == 0)
 	{
 		imageSize.width = 640;
@@ -203,14 +210,14 @@
 		contentSize.height *= scale;
 		contentSize.width *= scale;
 	}
-    
+
     NSRect contentRect = (NSRect){[[self.view window] frame].origin, contentSize};
     NSRect frameRect = [[self.view window] frameRectForContentRect:contentRect];
-    
+
     // Move the window up (or down) so it remains rooted at the top left
     float delta = [[self.view window] frame].size.height - frameRect.size.height;
     frameRect.origin.y += delta;
-    
+
     // Attempt to remain on-screen
     NSRect available = [[[self.view window] screen] visibleFrame];
     if ((frameRect.origin.x + frameRect.size.width) > available.size.width)
@@ -231,7 +238,7 @@
 	if ([window isEqual:[self.view window]])
 	{
 		// Resize to the current video dimensions
-        return [self frameRectForContentSize:[self windowContentSizeForCurrentVideo]];        
+        return [self frameRectForContentSize:[self windowContentSizeForCurrentVideo]];
     }
 	else
 	{
@@ -258,7 +265,7 @@
         wantedContentSize.width /= wr;
         wantedContentSize.height /= wr;
     }
-    
+
     NSRect newFrame = [self frameRectForContentSize:wantedContentSize];
     [[self.view window] setFrame:newFrame display:YES animate:NO];
 }

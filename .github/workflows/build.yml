@@ -42,7 +42,7 @@ jobs:
           APP_NAME=$(basename "$APP_PATH")
           (
             cd "$(dirname "$APP_PATH")"
-            zip -r "../../../artifacts/${APP_NAME%.*}-Universal.zip" "$APP_NAME"
+            zip -r "../../../../artifacts/${APP_NAME%.*}-Universal.zip" "$APP_NAME"
           )
 
           echo "Created zip: ./artifacts/${APP_NAME%.*}-Universal.zip"

@@ -1,0 +1,55 @@
+name: Simple Universal Build
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout code with submodules
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Select Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+
+    - name: Build Universal (using workspace)
+      run: |
+        xcodebuild -workspace "Simple.xcworkspace" \
+          -scheme "Simple Client" \
+          -configuration Release \
+          -derivedDataPath "./build"
+
+    - name: Package .app into zip
+      run: |
+        mkdir -p ./artifacts
+        APP_PATH=$(find ./build -name "*.app" -type d | head -1)
+        if [ -z "$APP_PATH" ]; then
+          echo "No .app found!"
+          exit 1
+        fi
+        echo "Found app: $APP_PATH"
+        APP_NAME=$(basename "$APP_PATH")
+        cd "$(dirname "$APP_PATH")"
+        zip -r "../../artifacts/${APP_NAME%.*}-Universal.zip" "$APP_NAME"
+        cd -
+
+    - name: Upload Artifacts to Actions
+      uses: actions/upload-artifact@v4
+      with:
+        name: SimpleClient-Universal
+        path: artifacts/
+
+    - name: Upload to GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: artifacts/*.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

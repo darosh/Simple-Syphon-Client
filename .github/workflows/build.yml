@@ -40,7 +40,10 @@ jobs:
           # Create artifacts directory and zip the app
           mkdir -p ./artifacts
           APP_NAME=$(basename "$APP_PATH")
-          zip -r "./artifacts/${APP_NAME%.*}-Universal.zip" "$APP_PATH"
+          (
+            cd "$(dirname "$APP_PATH")"
+            zip -r "../../../artifacts/${APP_NAME%.*}-Universal.zip" "$APP_NAME"
+          )
 
           echo "Created zip: ./artifacts/${APP_NAME%.*}-Universal.zip"
           ls -la ./artifacts/
